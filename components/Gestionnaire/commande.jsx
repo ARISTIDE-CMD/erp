@@ -142,7 +142,7 @@ export default function GestionCommandes() {
       );
 
       await loadData();
-      incrementNotification('admin.commandes');
+      incrementNotification('admin.commandes', 1, 'ADMIN');
       setNewOrder({ client_id: '', lignes: [{ id: Date.now(), article_id: '', prix: 0, quantite: 1 }] });
     } catch (e) {
       setError(e.message || 'Erreur lors de la creation.');

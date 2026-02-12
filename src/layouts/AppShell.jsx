@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { logout } from '@/services/auth.service';
-import { clearNotification, getNotifications, notificationEventName } from '@/lib/notifications';
+import { clearAllNotifications, clearNotification, getNotifications, notificationEventName } from '@/lib/notifications';
 
 const LogoMark = () => (
   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -20,9 +20,11 @@ export default function AppShell({
   const displayUser = user ?? { name: 'Utilisateur', role: roleLabel ?? '' };
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [notifications, setNotifications] = useState(() => getNotifications());
+  const [notifications, setNotifications] = useState({});
   const [showNotifications, setShowNotifications] = useState(false);
+  const [visibleNotifications, setVisibleNotifications] = useState(null);
   const [isBellRinging, setIsBellRinging] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const notificationRef = useRef(null);
   const ringTimeoutRef = useRef(null);
   const prevTotalRef = useRef(null);
@@ -40,44 +42,80 @@ export default function AppShell({
     }
   }, []);
 
+  const roleValue = String(profile?.role || displayUser.role || roleLabel || '').toUpperCase();
+  const roleLabelNormalized =
+    roleValue === 'ADMIN'
+      ? 'Admin'
+      : roleValue === 'GESTIONNAIRE'
+        ? 'Gestionnaire'
+        : displayUser.role || roleLabel || '';
+
+  const notificationScope =
+    roleValue.includes('ADMIN')
+      ? 'ADMIN'
+      : roleValue.includes('GESTIONNAIRE')
+        ? 'GESTIONNAIRE'
+        : 'GLOBAL';
+
   useEffect(() => {
-    const handleUpdate = () => setNotifications(getNotifications());
-    window.addEventListener(notificationEventName, handleUpdate);
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'molige_notifications') {
+    setNotifications(getNotifications(notificationScope));
+  }, [notificationScope]);
+
+  useEffect(() => {
+    prevTotalRef.current = null;
+  }, [notificationScope]);
+
+  useEffect(() => {
+    const handleUpdate = () => setNotifications(getNotifications(notificationScope));
+    const handleStorage = (event) => {
+      if (event.key && event.key.startsWith('molige_notifications:') && event.key.endsWith(notificationScope)) {
         handleUpdate();
       }
-    });
+    };
+    window.addEventListener(notificationEventName, handleUpdate);
+    window.addEventListener('storage', handleStorage);
     return () => {
       window.removeEventListener(notificationEventName, handleUpdate);
+      window.removeEventListener('storage', handleStorage);
     };
-  }, []);
+  }, [notificationScope]);
 
   useEffect(() => {
     navItems.forEach((item) => {
       if (item.notificationKey && location.pathname === item.to) {
         if (item.notificationKey !== 'admin.total') {
-          clearNotification(item.notificationKey);
+          clearNotification(item.notificationKey, notificationScope);
         }
       }
     });
-  }, [location.pathname, navItems]);
+  }, [location.pathname, navItems, notificationScope]);
 
   const computeNotificationTotal = (data) =>
     Object.entries(data).reduce((sum, [key, value]) => {
-    if (key === 'admin.total') return sum;
-    return sum + Number(value || 0);
-  }, 0);
+      if (key === 'admin.total') return sum;
+      return sum + Number(value || 0);
+    }, 0);
 
   const notificationTotal = computeNotificationTotal(notifications);
 
   const notificationItems = [
     { key: 'admin.clients', label: 'Nouveau(x) client(s)' },
     { key: 'admin.commandes', label: 'Nouvelle(s) commande(s)' },
+    { key: 'admin.stocks', label: 'Stock critique' },
   ];
 
+  const listNotifications =
+    showNotifications && visibleNotifications
+      ? Object.entries(notifications).reduce((acc, [key, value]) => {
+          const current = Number(acc[key] || 0);
+          const incoming = Number(value || 0);
+          acc[key] = current + incoming;
+          return acc;
+        }, { ...visibleNotifications })
+      : notifications;
+
   const activeNotifications = notificationItems
-    .map((item) => ({ ...item, count: Number(notifications[item.key] || 0) }))
+    .map((item) => ({ ...item, count: Number(listNotifications[item.key] || 0) }))
     .filter((item) => item.count > 0);
 
   useEffect(() => {
@@ -85,6 +123,7 @@ export default function AppShell({
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
+        setVisibleNotifications(null);
       }
     };
     window.addEventListener('mousedown', handleClickOutside);
@@ -135,14 +174,6 @@ export default function AppShell({
     if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
   }, []);
 
-  const roleValue = String(profile?.role || displayUser.role || roleLabel || '').toUpperCase();
-  const roleLabelNormalized =
-    roleValue === 'ADMIN'
-      ? 'Admin'
-      : roleValue === 'GESTIONNAIRE'
-        ? 'Gestionnaire'
-        : displayUser.role || roleLabel || '';
-
   const displayName =
     profile?.full_name ||
     profile?.nom ||
@@ -152,11 +183,13 @@ export default function AppShell({
     'Utilisateur';
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     try {
       await logout();
     } finally {
       localStorage.removeItem('molige_profile');
-      navigate('/');
+      navigate('/', { replace: true });
+      setLoggingOut(false);
     }
   };
 
@@ -257,7 +290,18 @@ export default function AppShell({
               <div className="relative" ref={notificationRef}>
                 <button
                   type="button"
-                  onClick={() => setShowNotifications((value) => !value)}
+                  onClick={() =>
+                    setShowNotifications((value) => {
+                      const next = !value;
+                      if (next) {
+                        setVisibleNotifications(notifications);
+                        clearAllNotifications(notificationScope);
+                      } else {
+                        setVisibleNotifications(null);
+                      }
+                      return next;
+                    })
+                  }
                   className="relative flex items-center justify-center h-9 w-9 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                   aria-label="Notifications"
                 >
@@ -291,10 +335,16 @@ export default function AppShell({
                 <div className="text-xs text-blue-500">{roleLabelNormalized}</div>
               </div>
               <button
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                 onClick={handleLogout}
+                disabled={loggingOut}
               >
-                Deconnexion
+                <span className="flex items-center gap-2">
+                  {loggingOut && (
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  )}
+                  {loggingOut ? 'Deconnexion...' : 'Deconnexion'}
+                </span>
               </button>
             </div>
           </header>

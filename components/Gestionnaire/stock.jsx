@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, AlertTriangle } from 'lucide-react';
 import { getArticles } from '@/services/articles.service';
+import { syncStockAlerts } from '@/lib/notifications';
 
 export default function GestionStocks() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +18,7 @@ export default function GestionStocks() {
     try {
       const data = await getArticles();
       setStocks(data);
+      syncStockAlerts(data, -5, 'ADMIN');
     } finally {
       setLoading(false);
     }

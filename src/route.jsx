@@ -12,6 +12,7 @@ import GestionnaireClients from '../components/Gestionnaire/client.jsx';
 import GestionnaireCommandes from '../components/Gestionnaire/commande.jsx';
 import GestionnaireStocks from '../components/Gestionnaire/stock.jsx';
 import GestionnaireDocuments from '../components/Gestionnaire/document.jsx';
+import WelcomeAfterLogin from './components/WelcomeAfterLogin.jsx';
 
 const adminUser = { name: 'Diallo Awa', role: 'Administrateur' };
 const managerUser = { name: 'Kone Idris', role: 'Gestionnaire' };
@@ -22,7 +23,7 @@ const adminNav = [
   { to: '/admin/articles', label: 'Articles', icon: Package },
   { to: '/admin/clients', label: 'Clients', icon: Users, notificationKey: 'admin.clients' },
   { to: '/admin/commandes', label: 'Commandes', icon: ShoppingCart, notificationKey: 'admin.commandes' },
-  { to: '/admin/stocks', label: 'Stocks', icon: Package },
+  { to: '/admin/stocks', label: 'Stocks', icon: Package, notificationKey: 'admin.stocks' },
   { to: '/admin/documents', label: 'Documents', icon: FileText },
 ];
 
@@ -48,6 +49,7 @@ const withShell = (Component, options) => (
 
 export const appRoutes = [
   { path: '/', element: <MoligeERPLogin /> },
+  { path: '/welcome', element: <WelcomeAfterLogin /> },
   { path: '/admin', element: <Navigate to="/admin/dashboard" replace /> },
   {
     path: '/admin/dashboard',

@@ -63,7 +63,7 @@ export default function GestionnaireClients() {
         await updateClient(editingClient.id, { nom, telephone, adresse });
       } else {
         await createClient({ nom, telephone, adresse });
-        incrementNotification('admin.clients');
+        incrementNotification('admin.clients', 1, 'ADMIN');
       }
       await loadClients();
       setShowModal(false);

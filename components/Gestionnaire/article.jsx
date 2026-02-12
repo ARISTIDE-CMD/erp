@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Edit, Trash2, Package, X } from 'lucide-react';
 import { getArticles, createArticle, updateArticle, deleteArticle } from '@/services/articles.service';
 import { formatFCFA } from '@/lib/format';
+import { syncStockAlerts } from '@/lib/notifications';
 
 export default function GestionArticles() {
   const [articles, setArticles] = useState([]);
@@ -25,6 +26,7 @@ export default function GestionArticles() {
     try {
       const data = await getArticles();
       setArticles(data);
+      syncStockAlerts(data, -5, 'ADMIN');
     } finally {
       setLoading(false);
     }

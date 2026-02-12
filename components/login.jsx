@@ -28,13 +28,23 @@ export default function MoligeERPLogin() {
 
             localStorage.setItem('molige_profile', JSON.stringify(profile));
 
-            if (isAdmin) {
-                navigate('/admin/dashboard');
-            } else if (isManager) {
-                navigate('/gestionnaire/dashboard');
-            } else {
+            const target = isAdmin
+                ? '/admin/dashboard'
+                : isManager
+                    ? '/gestionnaire/dashboard'
+                    : null;
+
+            if (!target) {
                 throw new Error('Role non reconnu. Contactez l’administrateur.');
             }
+
+            const displayName = profile.full_name || profile.nom || profile.email || 'Utilisateur';
+
+            navigate('/welcome', {
+                replace: true,
+                state: { target, displayName },
+            });
+
         } catch (e) {
             setError(e.message);
         } finally {

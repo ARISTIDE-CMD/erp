@@ -4,6 +4,7 @@ import { getCommandes } from '@/services/commandes.service';
 import { getArticles } from '@/services/articles.service';
 import { getClients } from '@/services/clients.service';
 import { formatFCFA } from '@/lib/format';
+import { syncStockAlerts } from '@/lib/notifications';
 
 export default function MoligeERPDashboard() {
   const [commandes, setCommandes] = useState([]);
@@ -31,6 +32,7 @@ export default function MoligeERPDashboard() {
       setCommandes(orders);
       setArticles(items);
       setClients(customers);
+      syncStockAlerts(items, -5, 'ADMIN');
     } finally {
       setLoading(false);
     }
