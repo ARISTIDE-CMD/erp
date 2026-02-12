@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, Eye, QrCode } from 'lucide-react';
 import { getCommandes } from '@/services/commandes.service';
 import { formatFCFA } from '@/lib/format';
@@ -6,6 +6,9 @@ import QrCodeModal from '@/components/QrCodeModal';
 
 export default function AdminCommandes() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [qrContext, setQrContext] = useState(null);
@@ -40,10 +43,32 @@ export default function AdminCommandes() {
     }
   };
 
-  const filtered = commandes.filter((commande) =>
-    commande.numero_commande?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    commande.client?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return commandes.filter((commande) => {
+      const numero = String(commande.numero_commande ?? '').toLowerCase();
+      const clientName = String(commande.client?.nom ?? '').toLowerCase();
+      const statut = String(commande.statut ?? '');
+      const matchesSearch = !query || numero.includes(query) || clientName.includes(query);
+      const matchesStatus = statusFilter === 'all' || statut === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [commandes, searchTerm, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const paginatedCommandes = filtered.slice(pageStart, pageStart + pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, pageSize]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const openCommandeQr = (commande) => {
     const payload = {
@@ -113,6 +138,17 @@ export default function AdminCommandes() {
               className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="en_attente">En attente</option>
+            <option value="validee">Validee</option>
+            <option value="livree">Livree</option>
+            <option value="annulee">Annulee</option>
+          </select>
           <div className="text-sm text-gray-500">{loading ? 'Chargement...' : `${filtered.length} resultat(s)`}</div>
         </div>
 
@@ -135,8 +171,14 @@ export default function AdminCommandes() {
                     Chargement des commandes...
                   </td>
                 </tr>
+              ) : paginatedCommandes.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-6 text-sm text-gray-500 text-center">
+                    Aucune commande ne correspond au filtre.
+                  </td>
+                </tr>
               ) : (
-                filtered.map((commande) => (
+                paginatedCommandes.map((commande) => (
                   <tr key={commande.id} className="hover:bg-blue-50/40">
                     <td className="px-6 py-4 text-sm text-gray-900">{commande.numero_commande}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{commande.client?.nom ?? '-'}</td>
@@ -183,6 +225,37 @@ export default function AdminCommandes() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="px-6 py-4 bg-blue-50 border-t border-blue-100 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+          <div>
+            Total: {filtered.length} commande{filtered.length > 1 ? 's' : ''} (page {safePage}/{totalPages})
+          </div>
+          <div className="flex items-center gap-2">
+            <span>Par page</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="border border-blue-200 rounded-md px-2 py-1 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+            <button
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={safePage <= 1}
+              className="px-3 py-1 rounded-md border border-blue-200 text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-100"
+            >
+              Precedent
+            </button>
+            <button
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={safePage >= totalPages}
+              className="px-3 py-1 rounded-md border border-blue-200 text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-100"
+            >
+              Suivant
+            </button>
+          </div>
         </div>
       </div>
 

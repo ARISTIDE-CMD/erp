@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Edit, Trash2, Plus, QrCode, X } from 'lucide-react';
+import { Edit, Trash2, Plus, QrCode, X, Search } from 'lucide-react';
 import { getClients } from '@/services/clients.service';
 import { getArticles } from '@/services/articles.service';
 import { createCommande, getCommandes, deleteCommande, updateCommande } from '@/services/commandes.service';
@@ -23,6 +23,10 @@ export default function GestionCommandes() {
   const [error, setError] = useState('');
   const [qrContext, setQrContext] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [newOrder, setNewOrder] = useState({
     client_id: '',
@@ -53,6 +57,33 @@ export default function GestionCommandes() {
     () => newOrder.lignes.reduce((sum, line) => sum + line.prix * line.quantite, 0),
     [newOrder]
   );
+
+  const filteredCommandes = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return commandes.filter((commande) => {
+      const numero = String(commande.numero_commande ?? '').toLowerCase();
+      const clientName = String(commande.client?.nom ?? '').toLowerCase();
+      const statut = String(commande.statut ?? '');
+      const matchesQuery = !query || numero.includes(query) || clientName.includes(query);
+      const matchesStatus = statusFilter === 'all' || statut === statusFilter;
+      return matchesQuery && matchesStatus;
+    });
+  }, [commandes, searchTerm, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCommandes.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const paginatedCommandes = filteredCommandes.slice(pageStart, pageStart + pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, pageSize]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const getArticleById = (articleId) => articles.find((a) => a.id === articleId);
   const getStockForLine = (line) => getArticleById(line.article_id)?.quantite_stock ?? 0;
@@ -389,6 +420,29 @@ export default function GestionCommandes() {
       )}
 
       <div className="bg-white rounded-lg border border-blue-50 shadow-sm">
+        <div className="p-4 border-b border-blue-50 flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filtrer par numero ou client..."
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="en_attente">En attente</option>
+            <option value="validee">Validee</option>
+            <option value="livree">Livree</option>
+          </select>
+          <div className="text-sm text-gray-500">{loading ? 'Chargement...' : `${filteredCommandes.length} resultat(s)`}</div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-blue-50">
@@ -408,8 +462,14 @@ export default function GestionCommandes() {
                     Chargement des commandes...
                   </td>
                 </tr>
+              ) : paginatedCommandes.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-6 text-sm text-gray-500 text-center">
+                    Aucune commande ne correspond au filtre.
+                  </td>
+                </tr>
               ) : (
-                commandes.map((commande) => (
+                paginatedCommandes.map((commande) => (
                   <tr key={commande.id} className="hover:bg-blue-50/40">
                     <td className="px-6 py-4 text-sm text-gray-900">{commande.numero_commande}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{commande.client?.nom ?? '-'}</td>
@@ -460,6 +520,37 @@ export default function GestionCommandes() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="px-6 py-4 bg-blue-50 border-t border-blue-100 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+          <div>
+            Total: {filteredCommandes.length} commande{filteredCommandes.length > 1 ? 's' : ''} (page {safePage}/{totalPages})
+          </div>
+          <div className="flex items-center gap-2">
+            <span>Par page</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="border border-blue-200 rounded-md px-2 py-1 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+            <button
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={safePage <= 1}
+              className="px-3 py-1 rounded-md border border-blue-200 text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-100"
+            >
+              Precedent
+            </button>
+            <button
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={safePage >= totalPages}
+              className="px-3 py-1 rounded-md border border-blue-200 text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-100"
+            >
+              Suivant
+            </button>
+          </div>
         </div>
       </div>
 
