@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { Edit, Trash2, Search } from 'lucide-react';
 
-export default function GestionClients() {
+export default function GestionnaireClients() {
   const [searchTerm, setSearchTerm] = useState('');
   const [clients, setClients] = useState([
     { id: 1, nom: 'Dupont Jean', telephone: '06 12 34 56 78', adresse: '12 Rue de la Paix, 75001 Paris' },
     { id: 2, nom: 'Martin Sophie', telephone: '07 23 45 67 89', adresse: '24 Avenue des Champs, 69002 Lyon' },
     { id: 3, nom: 'Bernard Paul', telephone: '06 34 56 78 90', adresse: "3 Boulevard de l'Europe, 13008 Marseille" },
     { id: 4, nom: 'Petit Marie', telephone: '07 45 67 89 01', adresse: '45 Rue des Lilas, 31000 Toulouse' },
-    { id: 5, nom: 'Durand Thomas', telephone: '06 56 78 90 12', adresse: '5 Rue de la Fontaine, 33000 Bordeaux' },
-    { id: 6, nom: 'Leroy Claire', telephone: '06 78 90 12 34', adresse: '8 Chemin des Vignes, 44000 Nantes' },
-    { id: 7, nom: 'Moreau Antoine', telephone: '07 89 01 23 45', adresse: '5 Place Royale, 06000 Nice' },
   ]);
 
   const handleDelete = (id) => {
@@ -30,7 +27,7 @@ export default function GestionClients() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-blue-700">Gestion des clients</h1>
-          <p className="text-sm text-gray-500">Consultez et mettez a jour votre base clients.</p>
+          <p className="text-sm text-gray-500">Gerez la base clients et leurs coordonnees.</p>
         </div>
         <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

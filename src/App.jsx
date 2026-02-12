@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { appRoutes } from './route.js';
+import { appRoutes } from './route.jsx';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {appRoutes.map(({ path, component: Component }) => (
-          <Route key={path} path={path} element={<Component />} />
+        {appRoutes.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
         ))}
       </Routes>
     </BrowserRouter>
