@@ -3,6 +3,8 @@ import { Edit, Trash2, Plus } from 'lucide-react';
 import { getClients } from '@/services/clients.service';
 import { getArticles } from '@/services/articles.service';
 import { createCommande, getCommandes, deleteCommande, updateCommande } from '@/services/commandes.service';
+import { incrementNotification } from '@/lib/notifications';
+import { formatFCFA } from '@/lib/format';
 
 const generateNumero = () => {
   const now = new Date();
@@ -140,6 +142,7 @@ export default function GestionCommandes() {
       );
 
       await loadData();
+      incrementNotification('admin.commandes');
       setNewOrder({ client_id: '', lignes: [{ id: Date.now(), article_id: '', prix: 0, quantite: 1 }] });
     } catch (e) {
       setError(e.message || 'Erreur lors de la creation.');
@@ -259,7 +262,7 @@ export default function GestionCommandes() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{line.prix.toFixed(2)} €</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{formatFCFA(line.prix, 2)}</td>
                     <td className="px-4 py-3 text-sm">
                       <input
                         type="number"
@@ -277,7 +280,7 @@ export default function GestionCommandes() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {(line.prix * line.quantite).toFixed(2)} €
+                      {formatFCFA(line.prix * line.quantite, 2)}
                     </td>
                     <td className="px-4 py-3">
                       <button
@@ -303,7 +306,7 @@ export default function GestionCommandes() {
 
           <div className="flex items-center justify-between border-t border-blue-50 pt-4">
             <div className="text-sm text-gray-500">Total commande</div>
-            <div className="text-xl font-semibold text-orange-500">{total.toFixed(2)} €</div>
+            <div className="text-xl font-semibold text-orange-500">{formatFCFA(total, 2)}</div>
           </div>
 
           {error && (
@@ -371,7 +374,7 @@ export default function GestionCommandes() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {commande.montant_total ? Number(commande.montant_total).toFixed(2) : '0.00'} €
+                      {commande.montant_total ? formatFCFA(commande.montant_total, 2) : formatFCFA(0, 2)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">

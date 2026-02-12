@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, Search, X } from 'lucide-react';
 import { getClients, createClient, updateClient, deleteClient } from '@/services/clients.service';
+import { incrementNotification } from '@/lib/notifications';
 
 export default function GestionnaireClients() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,6 +63,7 @@ export default function GestionnaireClients() {
         await updateClient(editingClient.id, { nom, telephone, adresse });
       } else {
         await createClient({ nom, telephone, adresse });
+        incrementNotification('admin.clients');
       }
       await loadClients();
       setShowModal(false);

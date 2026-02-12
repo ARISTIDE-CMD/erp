@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, Package, X } from 'lucide-react';
 import { getArticles, createArticle, updateArticle, deleteArticle } from '@/services/articles.service';
+import { formatFCFA } from '@/lib/format';
 
 export default function GestionArticles() {
   const [articles, setArticles] = useState([]);
@@ -146,7 +147,7 @@ export default function GestionArticles() {
                       {article.designation ?? article.nom}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {Number(article.prix_unitaire ?? article.prix).toFixed(2)} €
+                      {formatFCFA(Number(article.prix_unitaire ?? article.prix), 2)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {article.quantite_stock ?? article.quantite}

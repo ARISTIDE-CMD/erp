@@ -17,11 +17,11 @@ const adminUser = { name: 'Diallo Awa', role: 'Administrateur' };
 const managerUser = { name: 'Kone Idris', role: 'Gestionnaire' };
 
 const adminNav = [
-  { to: '/admin/dashboard', label: 'Analyses', icon: TrendingUp },
+  { to: '/admin/dashboard', label: 'Analyses', icon: TrendingUp, notificationKey: 'admin.total' },
   { to: '/admin/users', label: 'Utilisateurs', icon: Users },
   { to: '/admin/articles', label: 'Articles', icon: Package },
-  { to: '/admin/clients', label: 'Clients', icon: Users },
-  { to: '/admin/commandes', label: 'Commandes', icon: ShoppingCart },
+  { to: '/admin/clients', label: 'Clients', icon: Users, notificationKey: 'admin.clients' },
+  { to: '/admin/commandes', label: 'Commandes', icon: ShoppingCart, notificationKey: 'admin.commandes' },
   { to: '/admin/stocks', label: 'Stocks', icon: Package },
   { to: '/admin/documents', label: 'Documents', icon: FileText },
 ];

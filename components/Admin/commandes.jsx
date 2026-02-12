@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Eye } from 'lucide-react';
 import { getCommandes } from '@/services/commandes.service';
+import { formatFCFA } from '@/lib/format';
 
 export default function AdminCommandes() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -119,7 +120,7 @@ export default function AdminCommandes() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {commande.montant_total ? Number(commande.montant_total).toFixed(2) : '0.00'} €
+                      {commande.montant_total ? formatFCFA(commande.montant_total, 2) : formatFCFA(0, 2)}
                     </td>
                     <td className="px-6 py-4">
                       <button className="text-blue-500 hover:text-blue-700" title="Voir">

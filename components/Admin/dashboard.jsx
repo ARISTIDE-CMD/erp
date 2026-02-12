@@ -3,6 +3,7 @@ import { Eye, Edit, TrendingUp, Package, AlertCircle, BarChart3 } from 'lucide-r
 import { getCommandes } from '@/services/commandes.service';
 import { getArticles } from '@/services/articles.service';
 import { getClients } from '@/services/clients.service';
+import { formatFCFA } from '@/lib/format';
 
 export default function MoligeERPDashboard() {
   const [commandes, setCommandes] = useState([]);
@@ -117,7 +118,7 @@ export default function MoligeERPDashboard() {
         <div className="bg-white rounded-lg border border-blue-50 shadow-sm p-5">
           <div className="text-sm text-blue-600 font-medium">Chiffre d'affaires</div>
           <div className="text-3xl font-bold text-orange-500 mt-3">
-            {loading ? '...' : `${revenue.toFixed(2)} €`}
+            {loading ? '...' : formatFCFA(revenue, 2)}
           </div>
           <div className="text-xs text-gray-500 mt-1">Total cumule</div>
         </div>
@@ -297,7 +298,7 @@ export default function MoligeERPDashboard() {
                           <div className="text-blue-600">Commandes: {hovered.count}</div>
                         )}
                         {showRevenue && (
-                          <div className="text-orange-600">Montant: {hovered.total.toFixed(2)} €</div>
+                          <div className="text-orange-600">Montant: {formatFCFA(hovered.total, 2)}</div>
                         )}
                       </div>
                     )}
@@ -350,7 +351,7 @@ export default function MoligeERPDashboard() {
                     style={{ width: `${(bucket.total / maxRevenue) * 100}%` }}
                   />
                 </div>
-                <div className="text-xs text-gray-500">{bucket.total.toFixed(1)}€</div>
+                <div className="text-xs text-gray-500">{formatFCFA(bucket.total, 1)}</div>
               </div>
             ))}
           </div>

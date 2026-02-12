@@ -71,3 +71,50 @@ body {
   font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 15px;
 }
+
+@keyframes bell-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(12deg);
+  }
+  20% {
+    transform: rotate(-12deg);
+  }
+  30% {
+    transform: rotate(10deg);
+  }
+  40% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+  60% {
+    transform: rotate(-8deg);
+  }
+  70% {
+    transform: rotate(6deg);
+  }
+  80% {
+    transform: rotate(-6deg);
+  }
+  90% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.bell-ring {
+  transform-origin: 50% 0%;
+  animation: bell-ring 0.8s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bell-ring {
+    animation: none;
+  }
+}

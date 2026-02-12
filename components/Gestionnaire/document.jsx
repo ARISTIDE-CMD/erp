@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Download, Eye, Upload, Trash2, X } from 'lucide-react';
 import { getDocuments, generateDocument, deleteDocument } from '@/services/documents.service';
 import { getCommandes } from '@/services/commandes.service';
+import { formatFCFA } from '@/lib/format';
 
 const typeLabel = (type) => {
   switch (type) {
@@ -134,7 +135,7 @@ export default function GestionDocuments() {
                         {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '-'}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-blue-600">
-                        {doc.commande?.montant_total ? `${Number(doc.commande.montant_total).toFixed(2)} €` : '-'}
+                        {doc.commande?.montant_total != null ? formatFCFA(doc.commande.montant_total, 2) : '-'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
@@ -176,7 +177,7 @@ export default function GestionDocuments() {
                 <div><span className="font-semibold">Type:</span> {typeLabel(selectedDocument.type_document)}</div>
                 <div><span className="font-semibold">Commande:</span> {selectedDocument.commande?.numero_commande ?? '-'}</div>
                 <div><span className="font-semibold">Client:</span> {selectedDocument.commande?.client?.nom ?? '-'}</div>
-                <div><span className="font-semibold">Montant:</span> {selectedDocument.commande?.montant_total ? `${Number(selectedDocument.commande.montant_total).toFixed(2)} €` : '-'}</div>
+                <div><span className="font-semibold">Montant:</span> {selectedDocument.commande?.montant_total != null ? formatFCFA(selectedDocument.commande.montant_total, 2) : '-'}</div>
               </div>
               {selectedDocument.fichier_url ? (
                 <div className="space-y-3">

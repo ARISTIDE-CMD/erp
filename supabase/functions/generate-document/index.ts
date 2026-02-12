@@ -101,7 +101,7 @@ serve(async (req) => {
       y -= 16;
     });
 
-    drawText(`Montant total: ${Number(commande.montant_total ?? 0).toFixed(2)} EUR`, 50, y - 10, 12);
+    drawText(`Montant total: ${Number(commande.montant_total ?? 0).toFixed(2)} F CFA`, 50, y - 10, 12);
 
     const pdfBytes = await pdfDoc.save();
 
