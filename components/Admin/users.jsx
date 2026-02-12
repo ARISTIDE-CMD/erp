@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, UserPlus, X } from 'lucide-react';
-import { getUsers, updateUser, deleteUser } from '@/services/users.service';
+import { getUsers, updateUser, deleteUser, createUser } from '@/services/users.service';
 
 export default function GestionUtilisateurs() {
   const [showModal, setShowModal] = useState(false);
@@ -8,6 +8,8 @@ export default function GestionUtilisateurs() {
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('GESTIONNAIRE');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -29,20 +31,25 @@ export default function GestionUtilisateurs() {
   const openEdit = (user) => {
     setEditingUser(user);
     setFullName(user.full_name || '');
+    setEmail('');
+    setPassword('');
     setRole(user.role || 'GESTIONNAIRE');
     setError('');
     setShowModal(true);
   };
 
   const handleSave = async () => {
-    if (!editingUser) {
-      setError("Creation utilisateur indisponible ici. Utilisez le back-end Supabase Admin.");
-      return;
-    }
     setSaving(true);
     setError('');
     try {
-      await updateUser(editingUser.id, { full_name: fullName, role });
+      if (editingUser) {
+        await updateUser(editingUser.id, { full_name: fullName, role });
+      } else {
+        if (!email || !password) {
+          throw new Error('Email et mot de passe obligatoires.');
+        }
+        await createUser({ email, password, full_name: fullName, role });
+      }
       await loadUsers();
       setShowModal(false);
     } catch (e) {
@@ -77,8 +84,10 @@ export default function GestionUtilisateurs() {
           onClick={() => {
             setEditingUser(null);
             setFullName('');
+            setEmail('');
+            setPassword('');
             setRole('GESTIONNAIRE');
-            setError("Creation utilisateur indisponible ici. Utilisez le back-end Supabase Admin.");
+            setError('');
             setShowModal(true);
           }}
         >
@@ -163,6 +172,30 @@ export default function GestionUtilisateurs() {
                   onChange={(e) => setFullName(e.target.value)}
                 />
               </div>
+              {!editingUser && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input
+                      type="email"
+                      className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="utilisateur@moligeerp.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+                    <input
+                      type="password"
+                      className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Mot de passe temporaire"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <select
@@ -191,7 +224,7 @@ export default function GestionUtilisateurs() {
               <button
                 className="px-4 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-60"
                 onClick={handleSave}
-                disabled={saving || !editingUser}
+                disabled={saving}
               >
                 {saving ? 'Enregistrement...' : 'Enregistrer'}
               </button>

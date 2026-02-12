@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileText, Download, Eye, Upload, Trash2, X } from 'lucide-react';
-import { getDocuments, generateDocument, deleteDocument } from '@/services/documents.service';
+import { createDocument, deleteDocument, getDocuments, uploadDocumentFile } from '@/services/documents.service';
 import { getCommandes } from '@/services/commandes.service';
 import { formatFCFA } from '@/lib/format';
+import { generateOrderPdf } from '@/lib/document-pdf';
 
 const typeLabel = (type) => {
   switch (type) {
@@ -27,9 +28,15 @@ export default function GestionDocuments() {
   const [commandeId, setCommandeId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const localUrlsRef = useRef(new Set());
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => () => {
+    localUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    localUrlsRef.current.clear();
   }, []);
 
   const loadData = async () => {
@@ -47,14 +54,55 @@ export default function GestionDocuments() {
     setSaving(true);
     setError('');
     try {
-      await generateDocument({
-        type_document: typeDocument,
-        commande_id: commandeId || null,
+      if (!commandeId) {
+        throw new Error('Veuillez selectionner une commande.');
+      }
+
+      const commande = commandes.find((item) => item.id === commandeId);
+      if (!commande) {
+        throw new Error('Commande introuvable.');
+      }
+
+      const { bytes, blob, fileName } = await generateOrderPdf({
+        typeDocument,
+        commande,
       });
-      await loadData();
+
+      const localUrl = URL.createObjectURL(blob);
+      localUrlsRef.current.add(localUrl);
+
+      const localDoc = {
+        id: `local-${Date.now()}`,
+        type_document: typeDocument,
+        commande_id: commande.id,
+        commande,
+        created_at: new Date().toISOString(),
+        fichier_url: localUrl,
+      };
+
+      setDocuments((prev) => [localDoc, ...prev]);
+      setSelectedDocument(localDoc);
       setShowModal(false);
       setCommandeId('');
       setTypeDocument('proforma');
+
+      try {
+        const filePath = `documents/${commande.id}/${Date.now()}-${fileName}`;
+        const publicUrl = await uploadDocumentFile(filePath, bytes);
+        const created = await createDocument({
+          type_document: typeDocument,
+          commande_id: commande.id,
+          fichier_url: publicUrl,
+        });
+
+        const persistedDoc = { ...created, commande };
+        setDocuments((prev) => [persistedDoc, ...prev.filter((doc) => doc.id !== localDoc.id)]);
+        setSelectedDocument(persistedDoc);
+        URL.revokeObjectURL(localUrl);
+        localUrlsRef.current.delete(localUrl);
+      } catch (persistError) {
+        setError(`PDF genere localement. Synchronisation serveur impossible: ${persistError.message || 'Erreur inconnue.'}`);
+      }
     } catch (e) {
       setError(e.message || 'Erreur lors de la creation.');
     } finally {
@@ -62,12 +110,45 @@ export default function GestionDocuments() {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (doc) => {
     if (window.confirm('Supprimer ce document ?')) {
-      deleteDocument(id)
-        .then(loadData)
+      if (String(doc.id).startsWith('local-')) {
+        if (doc.fichier_url) {
+          URL.revokeObjectURL(doc.fichier_url);
+          localUrlsRef.current.delete(doc.fichier_url);
+        }
+        setDocuments((prev) => prev.filter((item) => item.id !== doc.id));
+        if (selectedDocument?.id === doc.id) {
+          setSelectedDocument(null);
+        }
+        return;
+      }
+
+      deleteDocument(doc.id)
+        .then(async () => {
+          if (selectedDocument?.id === doc.id) {
+            setSelectedDocument(null);
+          }
+          await loadData();
+        })
         .catch((e) => setError(e.message || 'Erreur lors de la suppression.'));
     }
+  };
+
+  const handleDownload = (doc) => {
+    if (!doc?.fichier_url) return;
+    const fileName = `${doc.type_document || 'document'}-${doc.commande?.numero_commande || 'commande'}.pdf`;
+    const link = document.createElement('a');
+    link.href = doc.fichier_url;
+    link.download = fileName;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    link.click();
+  };
+
+  const handlePreview = (doc) => {
+    if (!doc?.fichier_url) return;
+    window.open(doc.fichier_url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -139,10 +220,24 @@ export default function GestionDocuments() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button className="text-blue-500 hover:text-blue-700" title="Telecharger">
+                          <button
+                            className="text-blue-500 hover:text-blue-700"
+                            title="Telecharger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(doc);
+                            }}
+                          >
                             <Download size={18} />
                           </button>
-                          <button className="text-blue-500 hover:text-blue-700" title="Voir">
+                          <button
+                            className="text-blue-500 hover:text-blue-700"
+                            title="Voir"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePreview(doc);
+                            }}
+                          >
                             <Eye size={18} />
                           </button>
                           <button
@@ -150,7 +245,7 @@ export default function GestionDocuments() {
                             title="Supprimer"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(doc.id);
+                              handleDelete(doc);
                             }}
                           >
                             <Trash2 size={18} />

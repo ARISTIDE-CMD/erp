@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 export async function getCommandes() {
     const { data, error } = await supabase
         .from('commandes')
-        .select('*, client:clients(id, nom), lignes:ligne_commandes(id, quantite, prix_unitaire, article:articles(id, reference, designation))')
+        .select('*, client:clients(id, nom, telephone, adresse), lignes:ligne_commandes(id, quantite, prix_unitaire, article:articles(id, reference, designation))')
         .order('created_at', { ascending: false })
 
     if (error) throw error

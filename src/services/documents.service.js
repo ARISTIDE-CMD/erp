@@ -11,24 +11,29 @@ export async function getDocuments() {
 }
 
 export async function createDocument(document) {
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('documents')
         .insert(document)
-
-    if (error) throw error
-}
-
-export async function generateDocument(payload) {
-    const { data: sessionData } = await supabase.auth.getSession()
-    const accessToken = sessionData?.session?.access_token
-
-    const { data, error } = await supabase.functions.invoke('generate-document', {
-        body: payload,
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    })
+        .select()
+        .single()
 
     if (error) throw error
     return data
+}
+
+export async function uploadDocumentFile(path, fileContent) {
+    const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(path, fileContent, { contentType: 'application/pdf', upsert: true })
+
+    if (uploadError) throw uploadError
+    const { data } = supabase.storage.from('documents').getPublicUrl(path)
+    return data?.publicUrl
+}
+
+export async function generateDocument(payload) {
+    // fallback kept for compatibility, now handled client-side in document.jsx
+    return payload
 }
 
 export async function updateDocument(id, updates) {
