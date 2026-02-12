@@ -163,7 +163,7 @@ export default function GestionClients() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] bg-black/35 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-blue-50">
               <h2 className="text-lg font-semibold text-blue-700">
@@ -223,7 +223,12 @@ export default function GestionClients() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? 'Enregistrement...' : 'Enregistrer'}
+                <span className="inline-flex items-center gap-2">
+                  {saving && (
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  )}
+                  {saving ? 'Enregistrement...' : 'Enregistrer'}
+                </span>
               </button>
             </div>
           </div>

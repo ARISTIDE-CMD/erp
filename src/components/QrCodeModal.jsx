@@ -41,7 +41,7 @@ export default function QrCodeModal({ open, onClose, title, qrValue }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/35 flex items-center justify-center p-4 z-[60]">
+    <div className="fixed inset-0 z-[80] bg-black/35 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
         <div className="px-5 py-4 border-b border-blue-50 flex items-center justify-between">
           <h3 className="text-base font-semibold text-blue-700">{title || 'QR code'}</h3>

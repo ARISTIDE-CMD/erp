@@ -28,6 +28,8 @@ export default function GestionDocuments() {
   const [commandeId, setCommandeId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [hoverDocInfoId, setHoverDocInfoId] = useState(null);
+  const [showViewerInfo, setShowViewerInfo] = useState(false);
   const localUrlsRef = useRef(new Set());
 
   useEffect(() => {
@@ -151,6 +153,16 @@ export default function GestionDocuments() {
     window.open(doc.fichier_url, '_blank', 'noopener,noreferrer');
   };
 
+  const renderDocInfo = (doc) => (
+    <div className="w-max max-w-[290px] rounded-lg border border-blue-100 bg-white shadow-xl p-3 text-xs text-gray-700 space-y-1">
+      <div><span className="font-semibold text-blue-700">Type:</span> {typeLabel(doc?.type_document)}</div>
+      <div><span className="font-semibold text-blue-700">Commande:</span> {doc?.commande?.numero_commande ?? '-'}</div>
+      <div><span className="font-semibold text-blue-700">Client:</span> {doc?.commande?.client?.nom ?? '-'}</div>
+      <div><span className="font-semibold text-blue-700">Date:</span> {doc?.created_at ? new Date(doc.created_at).toLocaleDateString() : '-'}</div>
+      <div><span className="font-semibold text-blue-700">Montant:</span> {doc?.commande?.montant_total != null ? formatFCFA(doc.commande.montant_total, 2) : '-'}</div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -230,16 +242,29 @@ export default function GestionDocuments() {
                           >
                             <Download size={18} />
                           </button>
-                          <button
-                            className="text-blue-500 hover:text-blue-700"
-                            title="Voir"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDocument(doc);
-                            }}
-                          >
-                            <Eye size={18} />
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="text-blue-500 hover:text-blue-700"
+                              title="Voir"
+                              onMouseEnter={() => setHoverDocInfoId(doc.id)}
+                              onMouseLeave={() => setHoverDocInfoId(null)}
+                              onWheel={(e) => {
+                                e.stopPropagation();
+                                setHoverDocInfoId(doc.id);
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDocument(doc);
+                              }}
+                            >
+                              <Eye size={18} />
+                            </button>
+                            {hoverDocInfoId === doc.id && (
+                              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30">
+                                {renderDocInfo(doc)}
+                              </div>
+                            )}
+                          </div>
                           <button
                             className="text-orange-500 hover:text-orange-600"
                             title="Supprimer"
@@ -306,14 +331,26 @@ export default function GestionDocuments() {
                     className="w-full flex-1 min-h-[280px] border border-blue-100 rounded-lg bg-white"
                   />
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
-                      onClick={() => handlePreview(selectedDocument)}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setShowViewerInfo(true)}
+                      onMouseLeave={() => setShowViewerInfo(false)}
+                      onWheel={() => setShowViewerInfo(true)}
                     >
-                      <Eye size={16} />
-                      Ouvrir
-                    </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
+                        onClick={() => handlePreview(selectedDocument)}
+                      >
+                        <Eye size={16} />
+                        Ouvrir
+                      </button>
+                      {showViewerInfo && (
+                        <div className="absolute left-0 bottom-full mb-2 z-30">
+                          {renderDocInfo(selectedDocument)}
+                        </div>
+                      )}
+                    </div>
                     <button
                       type="button"
                       className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md bg-orange-500 text-white hover:bg-orange-600"
@@ -341,7 +378,7 @@ export default function GestionDocuments() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[90] bg-black/35 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-blue-50">
               <h2 className="text-lg font-semibold text-blue-700">Generer un document</h2>
@@ -395,7 +432,12 @@ export default function GestionDocuments() {
                 onClick={handleCreate}
                 disabled={saving}
               >
-                {saving ? 'Enregistrement...' : 'Generer'}
+                <span className="inline-flex items-center gap-2">
+                  {saving && (
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  )}
+                  {saving ? 'Enregistrement...' : 'Generer'}
+                </span>
               </button>
             </div>
           </div>

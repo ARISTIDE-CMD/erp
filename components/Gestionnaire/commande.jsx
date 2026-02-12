@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Edit, Trash2, Plus, QrCode } from 'lucide-react';
+import { Edit, Trash2, Plus, QrCode, X } from 'lucide-react';
 import { getClients } from '@/services/clients.service';
 import { getArticles } from '@/services/articles.service';
 import { createCommande, getCommandes, deleteCommande, updateCommande } from '@/services/commandes.service';
@@ -22,6 +22,7 @@ export default function GestionCommandes() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [qrContext, setQrContext] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [newOrder, setNewOrder] = useState({
     client_id: '',
@@ -146,6 +147,7 @@ export default function GestionCommandes() {
       await loadData();
       incrementNotification('admin.commandes', 1, 'ADMIN');
       setNewOrder({ client_id: '', lignes: [{ id: Date.now(), article_id: '', prix: 0, quantite: 1 }] });
+      setShowCreateModal(false);
     } catch (e) {
       setError(e.message || 'Erreur lors de la creation.');
     } finally {
@@ -212,7 +214,10 @@ export default function GestionCommandes() {
         </div>
         <button
           className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
-          onClick={() => handleCreate('en_attente')}
+          onClick={() => {
+            setError('');
+            setShowCreateModal(true);
+          }}
           disabled={saving}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,141 +227,166 @@ export default function GestionCommandes() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-50 shadow-sm">
-        <div className="p-4 border-b border-blue-50">
-          <h2 className="text-lg font-semibold text-blue-600">Creation d'une commande</h2>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Client</label>
-              <select
-                value={newOrder.client_id}
-                onChange={(e) => setNewOrder({ ...newOrder, client_id: e.target.value })}
-                className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {showCreateModal && (
+        <div className="fixed inset-0 z-[80] bg-black/35 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg border border-blue-50 shadow-sm w-full max-w-5xl">
+            <div className="p-4 border-b border-blue-50 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-blue-600">Creation d'une commande</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+                title="Fermer"
               >
-                <option value="">Selectionner un client</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.nom}
-                  </option>
-                ))}
-              </select>
+                <X size={18} />
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-              <input
-                type="date"
-                className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="p-6 space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Client</label>
+                  <select
+                    value={newOrder.client_id}
+                    onChange={(e) => setNewOrder({ ...newOrder, client_id: e.target.value })}
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selectionner un client</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <input
+                    type="date"
+                    className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-blue-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Article</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Prix</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Quantite</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Total</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {newOrder.lignes.map((line) => (
+                      <tr key={line.id} className="hover:bg-blue-50/40">
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <select
+                            value={line.article_id}
+                            onChange={(e) => handleArticleChange(line.id, e.target.value)}
+                            className="w-full border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Selectionner</option>
+                            {articles.map((article) => (
+                              <option key={article.id} value={article.id}>
+                                {article.designation}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{formatFCFA(line.prix, 2)}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <input
+                            type="number"
+                            min={getStockForLine(line) > 0 ? 1 : 0}
+                            max={getStockForLine(line)}
+                            value={line.quantite}
+                            onChange={(e) => handleQty(line.id, e.target.value)}
+                            className="w-20 border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={getStockForLine(line) <= 0}
+                          />
+                          {line.article_id && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Stock: {getStockForLine(line)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {formatFCFA(line.prix * line.quantite, 2)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            className="text-orange-500 hover:text-orange-600"
+                            onClick={() => removeLine(line.id)}
+                            title="Supprimer ligne"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <button
+                className="flex items-center gap-2 text-blue-600 text-sm font-medium"
+                onClick={addLine}
+              >
+                <Plus size={16} /> Ajouter une ligne
+              </button>
+
+              <div className="flex items-center justify-between border-t border-blue-50 pt-4">
+                <div className="text-sm text-gray-500">Total commande</div>
+                <div className="text-xl font-semibold text-orange-500">{formatFCFA(total, 2)}</div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-orange-600 bg-orange-50 border border-orange-100 rounded-md px-3 py-2">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-60"
+                  onClick={() => handleCreate('en_attente')}
+                  disabled={saving}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {saving && (
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    )}
+                    Enregistrer
+                  </span>
+                </button>
+                <button
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-60"
+                  onClick={() => handleCreate('validee')}
+                  disabled={saving}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {saving && (
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    )}
+                    Valider
+                  </span>
+                </button>
+                <button
+                  className="bg-blue-100 text-blue-700 px-4 py-2 rounded-md hover:bg-blue-200 transition-colors"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setNewOrder({ client_id: '', lignes: [{ id: Date.now(), article_id: '', prix: 0, quantite: 1 }] });
+                    setError('');
+                  }}
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-blue-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Article</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Prix</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Quantite</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase">Total</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-blue-500 uppercase"></th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {newOrder.lignes.map((line) => (
-                  <tr key={line.id} className="hover:bg-blue-50/40">
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      <select
-                        value={line.article_id}
-                        onChange={(e) => handleArticleChange(line.id, e.target.value)}
-                        className="w-full border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Selectionner</option>
-                        {articles.map((article) => (
-                          <option key={article.id} value={article.id}>
-                            {article.designation}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatFCFA(line.prix, 2)}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <input
-                        type="number"
-                        min={getStockForLine(line) > 0 ? 1 : 0}
-                        max={getStockForLine(line)}
-                        value={line.quantite}
-                        onChange={(e) => handleQty(line.id, e.target.value)}
-                        className="w-20 border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled={getStockForLine(line) <= 0}
-                      />
-                      {line.article_id && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Stock: {getStockForLine(line)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatFCFA(line.prix * line.quantite, 2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        className="text-orange-500 hover:text-orange-600"
-                        onClick={() => removeLine(line.id)}
-                        title="Supprimer ligne"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <button
-            className="flex items-center gap-2 text-blue-600 text-sm font-medium"
-            onClick={addLine}
-          >
-            <Plus size={16} /> Ajouter une ligne
-          </button>
-
-          <div className="flex items-center justify-between border-t border-blue-50 pt-4">
-            <div className="text-sm text-gray-500">Total commande</div>
-            <div className="text-xl font-semibold text-orange-500">{formatFCFA(total, 2)}</div>
-          </div>
-
-          {error && (
-            <div className="text-sm text-orange-600 bg-orange-50 border border-orange-100 rounded-md px-3 py-2">
-              {error}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-60"
-              onClick={() => handleCreate('en_attente')}
-              disabled={saving}
-            >
-              Enregistrer
-            </button>
-            <button
-              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-60"
-              onClick={() => handleCreate('validee')}
-              disabled={saving}
-            >
-              Valider
-            </button>
-            <button
-              className="bg-blue-100 text-blue-700 px-4 py-2 rounded-md hover:bg-blue-200 transition-colors"
-              onClick={() => setNewOrder({ client_id: '', lignes: [{ id: Date.now(), article_id: '', prix: 0, quantite: 1 }] })}
-            >
-              Annuler
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="bg-white rounded-lg border border-blue-50 shadow-sm">
         <div className="overflow-x-auto">

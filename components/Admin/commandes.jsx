@@ -9,6 +9,7 @@ export default function AdminCommandes() {
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [qrContext, setQrContext] = useState(null);
+  const [hoveredCommandeInfoId, setHoveredCommandeInfoId] = useState(null);
 
   useEffect(() => {
     loadCommandes();
@@ -59,6 +60,16 @@ export default function AdminCommandes() {
       value: JSON.stringify(payload),
     });
   };
+
+  const renderCommandeInfo = (commande) => (
+    <div className="w-max max-w-[290px] rounded-lg border border-blue-100 bg-white shadow-xl p-3 text-xs text-gray-700 space-y-1">
+      <div><span className="font-semibold text-blue-700">Numero:</span> {commande?.numero_commande ?? '-'}</div>
+      <div><span className="font-semibold text-blue-700">Client:</span> {commande?.client?.nom ?? '-'}</div>
+      <div><span className="font-semibold text-blue-700">Date:</span> {commande?.created_at ? new Date(commande.created_at).toLocaleDateString() : '-'}</div>
+      <div><span className="font-semibold text-blue-700">Statut:</span> {commande?.statut ?? '-'}</div>
+      <div><span className="font-semibold text-blue-700">Montant:</span> {commande?.montant_total ? formatFCFA(commande.montant_total, 2) : formatFCFA(0, 2)}</div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -142,9 +153,22 @@ export default function AdminCommandes() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button className="text-blue-500 hover:text-blue-700" title="Voir">
-                          <Eye size={18} />
-                        </button>
+                        <div className="relative">
+                          <button
+                            className="text-blue-500 hover:text-blue-700"
+                            title="Voir"
+                            onMouseEnter={() => setHoveredCommandeInfoId(commande.id)}
+                            onMouseLeave={() => setHoveredCommandeInfoId(null)}
+                            onWheel={() => setHoveredCommandeInfoId(commande.id)}
+                          >
+                            <Eye size={18} />
+                          </button>
+                          {hoveredCommandeInfoId === commande.id && (
+                            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30">
+                              {renderCommandeInfo(commande)}
+                            </div>
+                          )}
+                        </div>
                         <button
                           className="text-blue-500 hover:text-blue-700"
                           title="QR code"
