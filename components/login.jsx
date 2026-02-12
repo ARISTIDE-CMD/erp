@@ -1,13 +1,45 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login } from '@/services/auth.service';
+import { getMyProfile } from '@/services/profile.service';
 
 export default function MoligeERPLogin() {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log('Connexion:', { username, password });
-        // Ajoutez ici votre logique de connexion
+        setError('');
+        setLoading(true);
+        try {
+            await login(email, password);
+            const profile = await getMyProfile();
+
+            if (!profile) {
+                throw new Error("Profil introuvable. Contactez l'administrateur.");
+            }
+
+            const roleValue = String(profile.role || '').toUpperCase();
+            const isAdmin = roleValue === 'ADMIN';
+            const isManager = roleValue === 'GESTIONNAIRE';
+
+            localStorage.setItem('molige_profile', JSON.stringify(profile));
+
+            if (isAdmin) {
+                navigate('/admin/dashboard');
+            } else if (isManager) {
+                navigate('/gestionnaire/dashboard');
+            } else {
+                throw new Error('Role non reconnu. Contactez l’administrateur.');
+            }
+        } catch (e) {
+            setError(e.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -28,21 +60,21 @@ export default function MoligeERPLogin() {
                 </div>
 
                 {/* Formulaire */}
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Nom d'utilisateur */}
+                <form onSubmit={handleLogin} className="space-y-5">
+                    {/* Email */}
                     <div>
                         <label
-                            htmlFor="username"
+                            htmlFor="email"
                             className="block text-sm font-medium text-gray-700 mb-2"
                         >
-                            Nom d'utilisateur
+                            Email
                         </label>
                         <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Entrez votre nom d'utilisateur"
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Entrez votre email"
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         />
                     </div>
@@ -65,12 +97,22 @@ export default function MoligeERPLogin() {
                         />
                     </div>
 
+                    {error && (
+                        <div className="text-sm text-orange-600 bg-orange-50 border border-orange-100 rounded-md px-3 py-2">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Bouton de connexion */}
                     <button
                         type="submit"
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-md transition-colors duration-200 shadow-sm"
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-md transition-colors duration-200 shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                        disabled={loading}
                     >
-                        Se connecter
+                        {loading && (
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        )}
+                        {loading ? 'Connexion...' : 'Se connecter'}
                     </button>
                 </form>
             </div>
