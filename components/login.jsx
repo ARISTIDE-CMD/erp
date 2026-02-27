@@ -53,8 +53,14 @@ export default function MoligeERPLogin() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+        <div className="relative min-h-screen bg-gray-50 flex items-center justify-center p-4 overflow-hidden">
+            <img
+                src="/logo.png"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none select-none absolute inset-0 m-auto w-[78vmin] max-w-[620px] opacity-25 z-0"
+            />
+            <div className="relative z-10 bg-white rounded-lg shadow-md p-8 w-full max-w-md">
                 {/* Logo et titre */}
                 <div className="flex items-center justify-center gap-3 mb-8">
                     <div className="bg-blue-500 rounded-lg p-2.5 flex items-center justify-center">
