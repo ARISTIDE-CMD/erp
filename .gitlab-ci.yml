@@ -1,0 +1,40 @@
+image: node:20
+
+stages:
+  - install
+  - build
+  - test
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - node_modules/
+
+install:
+  stage: install
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+build:
+  stage: build
+  dependencies:
+    - install
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+test:
+  stage: test
+  dependencies:
+    - install
+  script:
+    - npm run lint
