@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import BrandLogo from '@/components/BrandLogo';
 import { login } from '@/services/auth.service';
 import { getMyProfile } from '@/services/profile.service';
 
 export default function MoligeERPLogin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -63,15 +66,7 @@ export default function MoligeERPLogin() {
             <div className="relative z-10 bg-white rounded-lg shadow-md p-8 w-full max-w-md">
                 {/* Logo et titre */}
                 <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="bg-blue-500 rounded-lg p-2.5 flex items-center justify-center">
-                        <svg
-                            className="w-7 h-7 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z" />
-                        </svg>
-                    </div>
+                    <BrandLogo className="h-12 w-12 object-contain" />
                     <h1 className="text-2xl font-semibold text-blue-500">Molige ERP</h1>
                 </div>
 
@@ -103,14 +98,25 @@ export default function MoligeERPLogin() {
                         >
                             Mot de passe
                         </label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Entrez votre mot de passe"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Entrez votre mot de passe"
+                                className="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((current) => !current)}
+                                className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-gray-500 hover:text-blue-500 focus:outline-none focus:text-blue-500"
+                                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                                aria-pressed={showPassword}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
                     {error && (

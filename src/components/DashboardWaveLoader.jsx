@@ -1,3 +1,5 @@
+import BrandLogo from '@/components/BrandLogo';
+
 export default function DashboardWaveLoader({
   label = 'Chargement du tableau de bord...',
   fullScreen = false,
@@ -11,16 +13,14 @@ export default function DashboardWaveLoader({
       aria-label={label}
     >
       <div className="wave-loader-content">
-        {showLogo && (
-          <div className="wave-loader-logo-wrap" aria-hidden="true">
-            <div className="wave-loader-logo">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z" />
-              </svg>
+        <div className="wave-loader-brand">
+          {showLogo && (
+            <div className="wave-loader-logo-wrap" aria-hidden="true">
+              <BrandLogo className="wave-loader-logo" alt="" />
             </div>
-          </div>
-        )}
-        <div className="wave-loader-title">Molige ERP</div>
+          )}
+          <div className="wave-loader-title">Molige ERP</div>
+        </div>
         <div className="wave-loader-subtitle">{label}</div>
       </div>
       <div className="wave-loader-waves" aria-hidden="true">

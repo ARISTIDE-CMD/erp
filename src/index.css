@@ -144,21 +144,25 @@ body {
   padding: 24px;
 }
 
-.wave-loader-logo-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.wave-loader-logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: linear-gradient(145deg, #2563eb, #1d4ed8);
+.wave-loader-brand {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.28);
+  gap: 14px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.wave-loader-logo-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.wave-loader-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(37, 99, 235, 0.18));
 }
 
 .wave-loader-title {
@@ -222,6 +226,11 @@ body {
 @media (max-width: 640px) {
   .wave-loader-screen {
     min-height: calc(100vh - 120px);
+  }
+
+  .wave-loader-logo {
+    width: 56px;
+    height: 56px;
   }
 }
 

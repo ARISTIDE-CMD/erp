@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Bell, ChevronLeft, User } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
 import { logout } from '@/services/auth.service';
 import { getMyProfile, updateMyProfileAvatar, uploadMyProfileAvatar } from '@/services/profile.service';
 import { clearAllNotifications, clearNotification, getNotifications, notificationEventName } from '@/lib/notifications';
-
-const LogoMark = () => (
-  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z" />
-  </svg>
-);
 
 export default function AppShell({
   title,
@@ -293,11 +288,11 @@ export default function AppShell({
                 onClick={() => {
                   if (isCollapsed) setIsCollapsed(false);
                 }}
-                className={`bg-blue-600 p-2 rounded-lg ${isCollapsed ? 'hover:bg-blue-500 cursor-pointer' : 'cursor-default'}`}
+                className={`flex h-12 w-12 items-center justify-center rounded-xl ${isCollapsed ? 'hover:bg-white/10 cursor-pointer' : 'cursor-default'}`}
                 aria-label={isCollapsed ? 'Ouvrir la barre laterale' : 'Logo Molige ERP'}
                 title={isCollapsed ? 'Ouvrir la barre laterale' : 'Molige ERP'}
               >
-                <LogoMark />
+                <BrandLogo className="h-11 w-11 object-contain" />
               </button>
               {!isCollapsed && (
                 <div className="leading-tight">
@@ -372,9 +367,7 @@ export default function AppShell({
         <div className={`${isCollapsed ? 'ml-20' : 'ml-60'} min-h-screen flex flex-col transition-[margin] duration-200`}>
           <header className="sticky top-0 z-40 bg-blue-50/95 backdrop-blur border-b border-blue-100 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <LogoMark />
-              </div>
+              <BrandLogo className="h-11 w-11 object-contain" />
               <div>
                 <div className="text-blue-700 font-semibold">Molige ERP</div>
                 {title && <div className="text-xs text-blue-400">{title}</div>}
