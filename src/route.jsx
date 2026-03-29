@@ -5,7 +5,6 @@ import MoligeERPLogin from '../components/login.jsx';
 import AdminDashboard from '../components/Admin/dashboard.jsx';
 import AdminClients from '../components/Admin/client.jsx';
 import AdminUsers from '../components/Admin/users.jsx';
-import AdminCommandes from '../components/Admin/commandes.jsx';
 import GestionnaireDashboard from '../components/Gestionnaire/dashboard.jsx';
 import GestionnaireArticles from '../components/Gestionnaire/article.jsx';
 import GestionnaireClients from '../components/Gestionnaire/client.jsx';
@@ -89,8 +88,8 @@ export const appRoutes = [
   },
   {
     path: '/admin/commandes',
-    element: withShell(AdminCommandes, {
-      title: 'Suivi des commandes',
+    element: withShell(GestionnaireCommandes, {
+      title: 'Gestion des commandes',
       roleLabel: 'Administrateur',
       user: adminUser,
       navItems: adminNav,
